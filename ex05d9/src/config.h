@@ -1,0 +1,20 @@
+#pragma once
+
+#define FW_VERSION "1.0"
+#define FW_NAME "IOT-DIY-Sensor"
+#define FW_FOOTER "Bitekmindenhol"
+
+#define PIN_BUTTON 0
+#define PIN_BUZZER 14
+#define I2C_SDA 4
+#define I2C_SCL 5
+
+#define SENSOR_INTERVAL 20000
+#define DISPLAY_TIMEOUT 120000
+#define MQTT_RETRY_INTERVAL 120000
+#define BUTTON_DEBOUNCE 50
+#define WIFI_ATTEMPT_TIMEOUT 5000
+#define AP_FALLBACK_TIMEOUT 180000
+#define MAX_WIFI_ATTEMPTS 5
+
+#define LOG_LINES 20
