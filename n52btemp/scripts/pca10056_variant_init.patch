@@ -1,0 +1,25 @@
+--- a/variants/pca10056/variant.cpp
++++ b/variants/pca10056/variant.cpp
+@@ -39,17 +39,12 @@
+ 
+ void initVariant()
+ {
+-  // init all 4 onboard LEDs
++  // SuperMini nRF52840: P0.13 onboard 3.3V rail enable (LOW = rail off),
++  // P0.15 user red LED (active-HIGH, LOW = off).
++  // Drive both low as early as possible, right after init(), before setup().
++  digitalWrite(PIN_LED1, LOW);   // P0.13 rail off
+   pinMode(PIN_LED1, OUTPUT);
+-  ledOff(PIN_LED1);
+-
+-  pinMode(PIN_LED2, OUTPUT);
+-  ledOff(PIN_LED2);
+-
++  digitalWrite(PIN_LED3, LOW);   // P0.15 red LED off
+   pinMode(PIN_LED3, OUTPUT);
+-  ledOff(PIN_LED3);
+-
+-  pinMode(PIN_LED4, OUTPUT);
+-  ledOff(PIN_LED4);
+ }
+ 

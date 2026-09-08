@@ -1,0 +1,92 @@
+--- a/libraries/Wire/Wire_nRF52.cpp
++++ b/libraries/Wire/Wire_nRF52.cpp
+@@ -37,6 +37,31 @@
+   return &port->PIN_CNF[pin];
+ }
+ 
++// Bounded waiting for TWIM events: returns false if neither evt nor error
++// becomes set within TWIM_TIMEOUT_MS. Prevents permanent busy-loop when an
++// external device holds SDA/SCL low (endless clock stretch / short).
++static const uint32_t TWIM_TIMEOUT_MS = 50;
++
++static bool twimWait(volatile uint32_t* evt, volatile uint32_t* err)
++{
++  uint32_t t0 = millis();
++  while (!(*evt) && !(*err))
++  {
++    if ((millis() - t0) > TWIM_TIMEOUT_MS) return false;
++  }
++  return true;
++}
++
++static void twimAbort(NRF_TWIM_Type* twi)
++{
++  twi->TASKS_STOP = 0x1UL;
++  uint32_t t0 = millis();
++  while (!twi->EVENTS_STOPPED && ((millis() - t0) <= TWIM_TIMEOUT_MS)) {}
++  twi->EVENTS_STOPPED = 0x0UL;
++  twi->EVENTS_ERROR  = 0x0UL;
++  twi->ERRORSRC = 0xFFFFFFFFUL; // write-to-clear
++}
++
+ TwoWire::TwoWire(NRF_TWIM_Type * p_twim, NRF_TWIS_Type * p_twis, IRQn_Type IRQn, uint8_t pinSDA, uint8_t pinSCL)
+ {
+   this->_p_twim = p_twim;
+@@ -163,23 +188,21 @@
+   _p_twim->RXD.MAXCNT = quantity;
+   _p_twim->TASKS_STARTRX = 0x1UL;
+ 
+-  while(!_p_twim->EVENTS_RXSTARTED && !_p_twim->EVENTS_ERROR);
++  if (!twimWait(&_p_twim->EVENTS_RXSTARTED, &_p_twim->EVENTS_ERROR)) { twimAbort(_p_twim); return 0; }
+   _p_twim->EVENTS_RXSTARTED = 0x0UL;
+ 
+-  while(!_p_twim->EVENTS_LASTRX && !_p_twim->EVENTS_ERROR);
++  if (!twimWait(&_p_twim->EVENTS_LASTRX, &_p_twim->EVENTS_ERROR)) { twimAbort(_p_twim); return 0; }
+   _p_twim->EVENTS_LASTRX = 0x0UL;
+ 
+   if (stopBit || _p_twim->EVENTS_ERROR)
+   {
+     _p_twim->TASKS_STOP = 0x1UL;
+-    while(!_p_twim->EVENTS_STOPPED);
+-    _p_twim->EVENTS_STOPPED = 0x0UL;
++    if (twimWait(&_p_twim->EVENTS_STOPPED, &_p_twim->EVENTS_ERROR)) _p_twim->EVENTS_STOPPED = 0x0UL;
+   }
+   else
+   {
+     _p_twim->TASKS_SUSPEND = 0x1UL;
+-    while(!_p_twim->EVENTS_SUSPENDED);
+-    _p_twim->EVENTS_SUSPENDED = 0x0UL;
++    if (twimWait(&_p_twim->EVENTS_SUSPENDED, &_p_twim->EVENTS_ERROR)) _p_twim->EVENTS_SUSPENDED = 0x0UL;
+   }
+ 
+   if (_p_twim->EVENTS_ERROR)
+@@ -227,25 +250,23 @@
+ 
+   _p_twim->TASKS_STARTTX = 0x1UL;
+ 
+-  while(!_p_twim->EVENTS_TXSTARTED && !_p_twim->EVENTS_ERROR);
++  if (!twimWait(&_p_twim->EVENTS_TXSTARTED, &_p_twim->EVENTS_ERROR)) { twimAbort(_p_twim); return 4; }
+   _p_twim->EVENTS_TXSTARTED = 0x0UL;
+ 
+   if (txBuffer.available()) {
+-    while(!_p_twim->EVENTS_LASTTX && !_p_twim->EVENTS_ERROR);
++    if (!twimWait(&_p_twim->EVENTS_LASTTX, &_p_twim->EVENTS_ERROR)) { twimAbort(_p_twim); return 4; }
+   }
+   _p_twim->EVENTS_LASTTX = 0x0UL;
+ 
+   if (stopBit || _p_twim->EVENTS_ERROR)
+   {
+     _p_twim->TASKS_STOP = 0x1UL;
+-    while(!_p_twim->EVENTS_STOPPED);
+-    _p_twim->EVENTS_STOPPED = 0x0UL;
++    if (twimWait(&_p_twim->EVENTS_STOPPED, &_p_twim->EVENTS_ERROR)) _p_twim->EVENTS_STOPPED = 0x0UL;
+   }
+   else
+   {
+     _p_twim->TASKS_SUSPEND = 0x1UL;
+-    while(!_p_twim->EVENTS_SUSPENDED);
+-    _p_twim->EVENTS_SUSPENDED = 0x0UL;
++    if (twimWait(&_p_twim->EVENTS_SUSPENDED, &_p_twim->EVENTS_ERROR)) _p_twim->EVENTS_SUSPENDED = 0x0UL;
+   }
+ 
+   if (_p_twim->EVENTS_ERROR)

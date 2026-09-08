@@ -1,4 +1,4 @@
-# IOT-DIY-Sensor
+# ESP8266-0.96Display-Temp-Sensor
 
 ESP8266 (Wemos D1 Mini) based IoT temperature and humidity sensor with Home Assistant integration.
 [EX05D9](https://bitekmindenhol.blog.hu/2018/07/14/wifi-s_homero_ex05d9)
