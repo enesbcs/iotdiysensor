@@ -27,10 +27,10 @@ Board: **SuperMini (nice!nano 0.6.0 UF2-compatible)** — nRF52840 @ 64 MHz Cort
 ## Features
 
 - **MCU**: nRF52840 (64 MHz Cortex-M4F, 1 MB Flash, 256 KB RAM, LFCLK 32.768 kHz), Adafruit nRF52 core + FreeRTOS.
-- **BLE**: BTHome v2 (unencrypted) beacon, non-connectable / non-scannable legacy advertising, 200 ms interval, 1 s broadcast per cycle, TX at max power (+8 dBm). The device name is intentionally not broadcast.
+- **BLE**: BTHome v2 (unencrypted) beacon, non-connectable / non-scannable legacy advertising, 500 ms interval, 3 s broadcast per cycle, TX at max power (+8 dBm). The device name is intentionally not broadcast.
 - **Payload** (`D2 FC 40 …`): battery percent (0x01), temperature (0x02), humidity (0x03), pressure (0x04), VDD voltage (0x0C). Battery and voltage are always included; sensor objects only when the BME280 read succeeds. VDD is measured with the integrated SAADC on VDD (12-bit, 1/6 gain, 0.6 V internal reference).
 - **Battery percent**: CR123A lookup curve (3.20 V → 100 % … 2.00 V → 0 %) with linear interpolation.
-- **Power management**: 180 s deep sleep per cycle (System ON low-power via FreeRTOS tickless idle → `sd_app_evt_wait`, internal RTC1 wake-up, RAM retained). The 3.3 V rail is kept off, the sensor is power-gated, and TWIM/I2C is disabled while sleeping. Estimated average draw ≈ 5 µA → roughly 10–15 years on a CR123A (battery shelf life becomes the limiting factor).
+- **Power management**: 180 s deep sleep per cycle (System ON low-power via FreeRTOS tickless idle → `sd_app_evt_wait`, internal RTC1 wake-up, RAM retained). The 3.3 V rail is kept off, the sensor is power-gated, and TWIM/I2C is disabled while sleeping. Estimated average draw ≈ 5 µA.
 - **Robustness** (hardened build):
   - Watchdog timer: 30 s active-time budget, automatically paused while the CPU sleeps (SLEEP = Pause), so the 180 s sleep is never disturbed.
   - Timeout-bounded I2C/TWIM waits in the `Wire` library — a stuck SDA/SCL line can no longer hang the MCU; the sensor is simply skipped.

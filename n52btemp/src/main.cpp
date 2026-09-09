@@ -10,8 +10,8 @@
 #define PIN_SENS_PWR     32  // P1.00 BME280 VIN switch, HIGH = on
 #define BME280_ADDR      0x76
 
-#define ADV_INTERVAL_MS    200
-#define ADV_DATA_SEC       1
+#define ADV_INTERVAL_MS    500
+#define ADV_DATA_SEC       3
 #define SLEEP_SEC          180
 #define SENSOR_WARMUP_MS   12
 
